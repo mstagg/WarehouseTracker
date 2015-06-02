@@ -5,60 +5,76 @@
  */
 
 
-//Intialize canvas and createjs stage
+// Intialize canvas and createjs stage
 var canvas= document.getElementById("trackerWindow");
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;   
 var stage = new createjs.Stage("trackerWindow");
+var img = new createjs.Bitmap("testsvg.svg");
+img.image.onload = load;
 createjs.Ticker.setFPS(60);
 
-//Intitalize events
+// Intitalize events
 createjs.Ticker.addEventListener("tick", stage);
+stage.addEventListener("stagemousedown", onMouseDown);
+canvas.addEventListener("mousewheel", MouseWheelHandler, false);
+canvas.addEventListener("DOMMouseScroll", MouseWheelHandler, false);
 
-//Create grid of 1000 points scaled to current canvas size
-var points = new Array();
-var xinc = canvas.width / 100, yinc = canvas.height / 100;
-var xdot = xinc, ydot = yinc;
-
-for(var i = 0; i < 100; i++){
-	points.push(new Array());
-	for(var j = 0; j < 100; j++){
-		var p = new Point(xdot, ydot);
-		points[i][j] = p;
-		ydot += yinc;	
-	}
-	ydot = yinc;
-	xdot += xinc;
-}
-
-var cx = 0, cy = 0;
+// Test circle
 var c = new createjs.Shape();
-c.graphics.beginFill("red").drawCircle(points[0][0].x, points[0][0].y, 5);
+c.graphics.beginFill("red").drawCircle(0, 0, 10);
 stage.addChild(c);
 
+// 'Main' Execution loop, fires 60 times per second
 function tick(e){
 
 }
 
+// Resizes SVG file after image loads and displays it
+function load(e){
+	img.scaleX = img.scaleY = Math.min(canvas.width / img.image.width, canvas.height / img.image.height);
+	stage.addChild(img);
+}
+
+// Test function to handle dot movement, to be replaced with predefined movement apths for assets
 window.onkeydown = function (e) {
     var code = e.keyCode ? e.keyCode : e.which;
-    if (code === 38 && cy > 0) { //up key
-		cy--;
-        //c.y = points[cx][cy].y;
-    } else if (code === 40 && cy < 99) { //down key
-        cy++;
-		//c.y = points[cx][cy].y;
-    } else if (code === 39 && cx < 99) { //right key
-		cx++;
-        //c.x = points[cx][cy].x;
-	} else if (code === 37 && cx > 0) { //left key
-		cx--;
-        //c.x = points[cx][cy].x;
+    if (code === 38) { //up key
+		createjs.Tween.get(c, { override:true }).to({y: c.y - 10}, 250, createjs.Ease.Linear);
+    } else if (code === 40) { //down key
+        createjs.Tween.get(c, { override:true }).to({y: c.y + 10}, 250, createjs.Ease.Linear);
+    } else if (code === 39) { //right key
+		createjs.Tween.get(c, { override:true }).to({x: c.x + 10}, 250, createjs.Ease.Linear);
+	} else if (code === 37) { //left key
+		createjs.Tween.get(c, { override:true }).to({x: c.x - 10}, 250, createjs.Ease.Linear);
 	}
-	createjs.Tween.get(c, { override:true }).to({ x: points[cx][cy].x, y: points[cx][cy].y }, 200, createjs.Ease.Linear);
 };
 
-function Point(xCoor, yCoor){
-	this.x = xCoor;
-	this.y = yCoor;
+// Listen for mouse click Events, handles dragging
+function onMouseDown(e) {
+	var offset={ x: stage.x - e.stageX, y: stage.y - e.stageY };
+	stage.addEventListener("stagemousemove",function(ev) {
+		stage.x = ev.stageX + offset.x;
+		stage.y = ev.stageY + offset.y;
+		stage.update();
+	});
+	stage.addEventListener("stagemouseup", function(){
+		stage.removeAllEventListeners("stagemousemove");
+	});
+}
+
+// Listen for mouse wheel Events, handles zooming
+var zoom;
+function MouseWheelHandler(e) {
+	if(Math.max(-1, Math.min(1, (e.wheelDelta || -e.detail)))>0)
+		zoom=1.1;
+	else
+		zoom=1/1.1;
+    // Move the point in the direction of the current mouse position, for smooth transition
+    var new_point = new createjs.Point(
+        stage.regX + parseInt((stage.mouseX - stage.regX)/2),
+        stage.regY + parseInt((stage.mouseY - stage.regY)/2));
+	stage.x = stage.regX = new_point.x;
+    stage.y = stage.regY = new_point.y;
+	stage.scaleX=stage.scaleY*=zoom;
 }
