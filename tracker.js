@@ -19,60 +19,94 @@ createjs.Ticker.addEventListener("tick", stage);
 stage.addEventListener("stagemousedown", onMouseDown);
 canvas.addEventListener("mousewheel", MouseWheelHandler, false);
 canvas.addEventListener("DOMMouseScroll", MouseWheelHandler, false);
+var assets = new Array();
 
 // Resizes SVG file after image loads and displays it
 // Remainder of program waits ot execute until after blueprint is loaded!
 function mapLoad(e){
 	img.scaleX = img.scaleY = Math.min(canvas.width / img.image.width, canvas.height / img.image.height);
 	stage.addChild(img);
-	main();
+	createAssets();
 }
 
-// Main function
-function main(){
-	//Test shapes
-	var shp1 = new Asset("Yellow", 0, 0);
-	var shp2 = new Asset("Red", 0, 0);
-	var shp3 = new Asset("Green", 0, 0);
-	var shp4 = new Asset("Blue", 0, 0);
-	var shp5 = new Asset("Purple", 0, 0);
-	alert(img.image.width);
+// Creates all assets
+function createAssets(){
+	assets.push(new Asset("Yellow", 50));
+	assets.push(new Asset("Red", 75));
+	assets.push(new Asset("Green", 100));
+	assets.push(new Asset("Blue", 125));
+	assets.push(new Asset("Purple", 150));
+	// Testing logs
+	console.log("move 1: " + getDirection(assets[0].path[0], assets[0].path[1]));
+	console.log("move 2: " + getDirection(assets[0].path[1], assets[0].path[2]));
+	console.log("move 3: " + getDirection(assets[0].path[2], assets[0].path[3]));
 }
 
 // Asset Structure
-function Asset(c, v, d){
+function Asset(c, v){
 	this.shape = new createjs.Shape();
 	this.color = c;
 	this.shape.graphics.beginFill(this.color).drawCircle(0, 0, 10);			//TODO: Give assets shape that can indicate direction
-	this.velocity = v;														//TODO: Implement velocity that will control tweening speed
-	this.direction = d;														//TODO: Implement directional facing
-	this.movingToPoint = false;
-	this.path = generatePoints();											//TODO: Refactor into dynamic structure. Current implementation is static and beyond disgusting.
-	this.current = this.path.head;
+	this.velocity = v;
+	this.direction = 0;
+	this.path = generatePoints();
 	stage.addChild(this.shape);
-	createjs.Tween.get(this.shape, { override:true, loop:true })
-	.to({x:this.path.head.x, y:this.path.head.y}, 1000, createjs.Ease.Linear)
-	.to({x:this.path.head.next.x, y:this.path.head.next.y}, 1000, createjs.Ease.Linear)
-	.to({x:this.path.head.next.next.x, y:this.path.head.next.next.y}, 1000, createjs.Ease.Linear)
-	.to({x:this.path.head.next.next.next.x, y:this.path.head.next.next.next.y}, 1000, createjs.Ease.Linear)
-	.to({x:this.path.head.next.next.next.next.x, y:this.path.head.next.next.next.next.y}, 1000, createjs.Ease.Linear)
-	.to({x:this.path.head.x, y:this.path.head.y}, 1000, createjs.Ease.Linear);
+	generateTween(this);
 }
 
-// Generates Linked List that represents path for asset to travel along
+// Generates array that represents path for asset to travel along
 function generatePoints(){
-	var a = {x:0, y:0};
-	var b = {x:(Math.floor((Math.random() * (img.image.width * img.scaleX)) - 1)), y:(Math.floor((Math.random() * (img.image.height * img.scaleY)) - 1))};
-	var c = {x:(Math.floor((Math.random() * (img.image.width * img.scaleX)) - 1)), y:(Math.floor((Math.random() * (img.image.height * img.scaleY)) - 1))};
-	var d = {x:(Math.floor((Math.random() * (img.image.width * img.scaleX)) - 1)), y:(Math.floor((Math.random() * (img.image.height * img.scaleY)) - 1))};
-	var e = {x:(Math.floor((Math.random() * (img.image.width * img.scaleX)) - 1)), y:(Math.floor((Math.random() * (img.image.height * img.scaleY)) - 1))};
-	
-	a.next = b;
-	b.next = c;
-	c.next = d;
-	d.next = e;
-	
-	return {head:a};
+	var size = Math.floor((Math.random() * 12) + 4);
+	var nodes = new Array(size);
+	nodes[0] = {x:0, y:0};
+	for(var i = 1; i < size; i++){
+		nodes[i] = {x:(Math.floor((Math.random() * (img.image.width * img.scaleX)) + 1)), y:(Math.floor((Math.random() * (img.image.height * img.scaleY)) + 1))};
+	}
+	return nodes;
+}
+
+// Queues up a loop of tweens between all of an asset's path nodes
+function generateTween(a){
+	var t = createjs.Tween.get(a.shape, {loop:true, paused:true});
+	for(var i = 0; i < a.path.length - 1; i++){
+		var d = distance(a.path[i], a.path[i + 1]);
+		var time = (d / a.velocity) * 1000;
+		t.to({x:a.path[i + 1].x, y:a.path[i + 1].y}, time);
+	} 
+	d = distance(a.path[a.path.length - 1], a.path[0]);
+	time = (d / a.velocity) * 1000;
+	t.to({x:a.path[0].x, y:a.path[0].y}, time);
+	t.setPaused(false);
+}
+
+// Returns distance between two cartesian points
+function distance(p1, p2){
+	var x1 = p1.x;
+	var x2 = p2.x;
+	var y1 = p1.y;
+	var y2 = p2.y;
+	return Math.sqrt(Math.pow((x2 - x1), 2) + Math.pow((y2 - y1), 2));
+}
+
+// Returns direction as an angle in respect to an eastern vector from one cartesian point to another
+function getDirection(p1, p2){
+	//to get radians: arctangent(slope from p1 to p2)
+	//to get degrees: multiply above by (180 / Pi)
+	var dir = ((Math.atan((p2.y - p1.y) / (p2.x - p1.x)))) * (180 / Math.PI);
+		
+	if(p2.x > p1.x){  	// If asset is moving right
+		if(dir > 0){
+			return 360 - dir;
+		} else {
+			return 0 - dir;
+		}
+	} else {			// If asset is moving left
+		if(dir > 0){
+			return 180 - dir;
+		} else {
+			return -dir + 180;
+		}
+	}
 }
 
 // Listen for mouse click Events, handles dragging
