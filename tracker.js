@@ -36,6 +36,7 @@ function createAssets(){
 	assets.push(new Asset("Green", 100));
 	assets.push(new Asset("Blue", 125));
 	assets.push(new Asset("Purple", 150));
+	assets.push(new Asset("Lavender", 5));
 	// Testing logs
 	console.log("move 1: " + getDirection(assets[0].path[0], assets[0].path[1]));
 	console.log("move 2: " + getDirection(assets[0].path[1], assets[0].path[2]));
