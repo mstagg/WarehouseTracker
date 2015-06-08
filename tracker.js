@@ -10,7 +10,7 @@ var canvas= document.getElementById("trackerWindow");
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;   
 var stage = new createjs.Stage("trackerWindow");
-var img = new createjs.Bitmap("testsvg.svg");
+var img = new createjs.Bitmap("blueprint.svg");
 img.image.onload = mapLoad;
 createjs.Ticker.setFPS(60);
 
@@ -47,13 +47,48 @@ function createAssets(){
 function Asset(c, v){
 	this.shape = new createjs.Shape();
 	this.color = c;
-	this.shape.graphics.beginFill(this.color)
+	// TODO: Refactor drawing into its own function
+	this.shape.graphics.beginFill(this.color) // Draw body
 	.moveTo(0, 0)
-	.lineTo(10, 0)
-	.lineTo(20, 10)
-	.lineTo(10, 20)
-	.lineTo(0, 20)
-	.lineTo(0, 0);			//TODO: Give assets shape that can indicate direction
+	.lineTo(40, 0)
+	.lineTo(40, 40)
+	.lineTo(0, 40)
+	.lineTo(0, 0)
+	.beginFill("gray") // Draw front lift
+	.moveTo(40, 0)
+	.lineTo(60, 0)
+	.lineTo(60, 5)
+	.lineTo(45, 5)
+	.lineTo(45, 35)
+	.lineTo(60, 35)
+	.lineTo(60, 40)
+	.lineTo(40, 40)
+	.lineTo(40, 0)
+	.beginFill("skyblue") // Draw windshield
+	.moveTo(35, 10)
+	.lineTo(35, 30)
+	.lineTo(30, 35)
+	.lineTo(30, 5)
+	.lineTo(35, 10)
+	.beginStroke("black") // Draw black line
+	.moveTo(20, 0)
+	.lineTo(20, 40)
+	.beginFill("black") // Draw rear wheels
+	.moveTo(5, 0)
+	.lineTo(12, 0)
+	.lineTo(12, 5)
+	.lineTo(5, 5)
+	.lineTo(5, 0)
+	.moveTo(5, 40)
+	.lineTo(12, 40)
+	.lineTo(12, 35)
+	.lineTo(5, 35)
+	.lineTo(5, 40)
+	.beginStroke("white")
+	.moveTo(5, 2)
+	.lineTo(12, 2)
+	.moveTo(5, 38)
+	.lineTo(12, 38);			//TODO: Give assets shape that can indicate direction
 	this.velocity = v;
 	this.direction = 0;
 	this.path = generatePoints();
@@ -78,8 +113,8 @@ function generatePoints(){
 // Queues up a loop of tweens between all of an asset's path nodes
 function generateTween(a){
 	var t = createjs.Tween.get(a.shape, {loop:true, paused:true});
-	a.shape.regX = a.shape.x + 10;
-	a.shape.regY = a.shape.y + 10;
+	a.shape.regX = a.shape.x + 20;
+	a.shape.regY = a.shape.y + 20;
 	for(var i = 0; i < a.path.length - 1; i++){
 		var d = distance(a.path[i], a.path[i + 1]);
 		var time = (d / a.velocity) * 1000;
