@@ -36,18 +36,24 @@ function createAssets(){
 	assets.push(new Asset("Green", 100));
 	assets.push(new Asset("Blue", 125));
 	assets.push(new Asset("Purple", 150));
-	assets.push(new Asset("Lavender", 5));
+	assets.push(new Asset("Orange", 175));
 	// Testing logs
-	console.log("move 1: " + getDirection(assets[0].path[0], assets[0].path[1]));
-	console.log("move 2: " + getDirection(assets[0].path[1], assets[0].path[2]));
-	console.log("move 3: " + getDirection(assets[0].path[2], assets[0].path[3]));
+	console.log("move 1: " + assets[0].path[0].a);
+	console.log("move 2: " + assets[0].path[1].a);
+	console.log("move 3: " + assets[0].path[2].a);
 }
 
 // Asset Structure
 function Asset(c, v){
 	this.shape = new createjs.Shape();
 	this.color = c;
-	this.shape.graphics.beginFill(this.color).drawCircle(0, 0, 10);			//TODO: Give assets shape that can indicate direction
+	this.shape.graphics.beginFill(this.color)
+	.moveTo(0, 0)
+	.lineTo(10, 0)
+	.lineTo(20, 10)
+	.lineTo(10, 20)
+	.lineTo(0, 20)
+	.lineTo(0, 0);			//TODO: Give assets shape that can indicate direction
 	this.velocity = v;
 	this.direction = 0;
 	this.path = generatePoints();
@@ -56,26 +62,33 @@ function Asset(c, v){
 }
 
 // Generates array that represents path for asset to travel along
+// Each point on path contains x location, y location, and a direction in degrees to the next point
 function generatePoints(){
 	var size = Math.floor((Math.random() * 12) + 4);
 	var nodes = new Array(size);
-	nodes[0] = {x:0, y:0};
+	nodes[0] = {x:0, y:0, a:null};
 	for(var i = 1; i < size; i++){
 		nodes[i] = {x:(Math.floor((Math.random() * (img.image.width * img.scaleX)) + 1)), y:(Math.floor((Math.random() * (img.image.height * img.scaleY)) + 1))};
+		nodes[i - 1].a = getDirection(nodes[i - 1], nodes[i]);
 	}
+	nodes[nodes.length - 1].a = getDirection(nodes[nodes.length - 1], nodes[0]);
 	return nodes;
 }
 
 // Queues up a loop of tweens between all of an asset's path nodes
 function generateTween(a){
 	var t = createjs.Tween.get(a.shape, {loop:true, paused:true});
+	a.shape.regX = a.shape.x + 10;
+	a.shape.regY = a.shape.y + 10;
 	for(var i = 0; i < a.path.length - 1; i++){
 		var d = distance(a.path[i], a.path[i + 1]);
 		var time = (d / a.velocity) * 1000;
+		t.to({rotation: a.path[i].a}, 1000);
 		t.to({x:a.path[i + 1].x, y:a.path[i + 1].y}, time);
 	} 
 	d = distance(a.path[a.path.length - 1], a.path[0]);
 	time = (d / a.velocity) * 1000;
+	t.to({rotation: a.path[a.path.length - 1].a}, 1000);
 	t.to({x:a.path[0].x, y:a.path[0].y}, time);
 	t.setPaused(false);
 }
@@ -97,17 +110,25 @@ function getDirection(p1, p2){
 		
 	if(p2.x > p1.x){  	// If asset is moving right
 		if(dir > 0){
-			return 360 - dir;
+			//return 360 - dir;
+			dir = 360 - dir;
 		} else {
-			return 0 - dir;
+			//return 0 - dir;
+			dir = 0 - dir;
 		}
 	} else {			// If asset is moving left
 		if(dir > 0){
-			return 180 - dir;
+			//return 180 - dir;
+			dir = 180 - dir;
 		} else {
-			return -dir + 180;
+			//return -dir + 180;
+			dir = -dir + 180;
 		}
 	}
+
+	// WARNING: The following code exists only to make this function compatible with tweenjs rotation property
+	// If tweenjs library is removed, uncomment return statements in if/else statement above
+	return Math.abs(dir - 360);
 }
 
 // Listen for mouse click Events, handles dragging
