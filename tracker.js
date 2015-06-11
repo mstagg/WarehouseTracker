@@ -7,8 +7,10 @@
 
 // Intialize canvas and createjs stage
 var canvas= document.getElementById("trackerWindow");
-canvas.width = window.innerWidth;
-canvas.height = window.innerHeight;   
+//canvas.width = window.innerWidth;
+//canvas.height = window.innerHeight;
+canvas.width = 990;
+canvas.height = 990;   
 var stage = new createjs.Stage("trackerWindow");
 var img = new createjs.Bitmap("blueprint.svg");
 img.image.onload = mapLoad;
@@ -19,83 +21,16 @@ createjs.Ticker.addEventListener("tick", stage);
 stage.addEventListener("stagemousedown", onMouseDown);
 canvas.addEventListener("mousewheel", MouseWheelHandler, false);
 canvas.addEventListener("DOMMouseScroll", MouseWheelHandler, false);
-var assets = new Array();
 
 // Resizes SVG file after image loads and displays it
 // Remainder of program waits ot execute until after blueprint is loaded!
 function mapLoad(e){
-	img.scaleX = img.scaleY = Math.min(canvas.width / img.image.width, canvas.height / img.image.height);
+	//img.scaleX = img.scaleY = Math.min(canvas.width / img.image.width, canvas.height / img.image.height);
 	stage.addChild(img);
 	createAssets();
 }
 
-// Creates all assets
-function createAssets(){
-	assets.push(new Asset("Yellow", 50));
-	assets.push(new Asset("Red", 75));
-	assets.push(new Asset("Green", 100));
-	assets.push(new Asset("Blue", 125));
-	assets.push(new Asset("Purple", 150));
-	assets.push(new Asset("Orange", 175));
-	// Testing logs
-	console.log("move 1: " + assets[0].path[0].a);
-	console.log("move 2: " + assets[0].path[1].a);
-	console.log("move 3: " + assets[0].path[2].a);
-}
-
-// Asset Structure
-function Asset(c, v){
-	this.shape = new createjs.Shape();
-	this.color = c;
-	// TODO: Refactor drawing into its own function
-	this.shape.graphics.beginFill(this.color) // Draw body
-	.moveTo(0, 0)
-	.lineTo(40, 0)
-	.lineTo(40, 40)
-	.lineTo(0, 40)
-	.lineTo(0, 0)
-	.beginFill("gray") // Draw front lift
-	.moveTo(40, 0)
-	.lineTo(60, 0)
-	.lineTo(60, 5)
-	.lineTo(45, 5)
-	.lineTo(45, 35)
-	.lineTo(60, 35)
-	.lineTo(60, 40)
-	.lineTo(40, 40)
-	.lineTo(40, 0)
-	.beginFill("skyblue") // Draw windshield
-	.moveTo(35, 10)
-	.lineTo(35, 30)
-	.lineTo(30, 35)
-	.lineTo(30, 5)
-	.lineTo(35, 10)
-	.beginStroke("black") // Draw black line
-	.moveTo(20, 0)
-	.lineTo(20, 40)
-	.beginFill("black") // Draw rear wheels
-	.moveTo(5, 0)
-	.lineTo(12, 0)
-	.lineTo(12, 5)
-	.lineTo(5, 5)
-	.lineTo(5, 0)
-	.moveTo(5, 40)
-	.lineTo(12, 40)
-	.lineTo(12, 35)
-	.lineTo(5, 35)
-	.lineTo(5, 40)
-	.beginStroke("white")
-	.moveTo(5, 2)
-	.lineTo(12, 2)
-	.moveTo(5, 38)
-	.lineTo(12, 38);			//TODO: Give assets shape that can indicate direction
-	this.velocity = v;
-	this.direction = 0;
-	this.path = generatePoints();
-	stage.addChild(this.shape);
-	generateTween(this);
-}
-
+// TODO: Scrap this function. Path for each asset will be predetermined.
 // Generates array that represents path for asset to travel along
 // Each point on path contains x location, y location, and a direction in degrees to the next point
 function generatePoints(){
@@ -109,6 +44,7 @@ function generatePoints(){
 	nodes[nodes.length - 1].a = getDirection(nodes[nodes.length - 1], nodes[0]);
 	return nodes;
 }
+
 
 // Queues up a loop of tweens between all of an asset's path nodes
 function generateTween(a){
@@ -168,6 +104,7 @@ function getDirection(p1, p2){
 
 // Listen for mouse click Events, handles dragging
 function onMouseDown(e) {
+	console.log(e.stageX + ", " + e.stageY); // Debugging
 	var offset={ x: stage.x - e.stageX, y: stage.y - e.stageY };
 	stage.addEventListener("stagemousemove",function(ev) {
 		stage.x = ev.stageX + offset.x;
